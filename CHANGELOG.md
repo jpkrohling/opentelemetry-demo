@@ -7,6 +7,10 @@ the release.
 
 ## Unreleased
 
+* [collector] Stop emitting resource attributes discouraged by semantic
+  conventions (`os.description`, `process.command_line`, `process.command_args`,
+  `process.executable.path`, `process.runtime.description`) on metrics
+  ([#PR](https://github.com/open-telemetry/opentelemetry-demo/pull/PR))
 * [llm] Increase `llm` service memory limit from 50M to 100M to prevent a
   startup restart loop caused by the container exceeding its memory limit
   ([#2944](https://github.com/open-telemetry/opentelemetry-demo/issues/2944))

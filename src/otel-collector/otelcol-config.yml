@@ -167,10 +167,30 @@ processors:
           enabled: true
         host.cpu.cache.l2.size:
           enabled: true
+        # os.description is a long, low-value string discouraged as a resource
+        # attribute; leave it disabled so the collector does not add it.
         os.description:
-          enabled: true
+          enabled: false
         os.type:
           enabled: true
+  # Drop resource attributes discouraged by OpenTelemetry semantic conventions.
+  # The language SDKs attach verbose/high-cardinality process and OS details to
+  # every metric series; these add cost without query value. Runs on the metrics
+  # pipeline, which also covers the span_metrics connector output (it inherits
+  # the originating span's resource attributes).
+  resource/drop_discouraged_resource_attributes:
+    attributes:
+      - key: os.description
+        action: delete
+      - key: process.command_line
+        action: delete
+      - key: process.command_args
+        action: delete
+      - key: process.executable.path
+        action: delete
+      - key: process.runtime.description
+        action: delete
+
   filter/sanitize_profiles:
     error_mode: ignore
     profiles:
@@ -244,7 +264,7 @@ service:
       exporters: [debug, span_metrics]
     metrics:
       receivers: [docker_stats, http_check/frontend-proxy, host_metrics, nginx, otlp, redis, postgresql, prometheus/ad, span_metrics]
-      processors: [resourcedetection, memory_limiter]
+      processors: [resourcedetection, memory_limiter, resource/drop_discouraged_resource_attributes]
       exporters: [debug]
     logs:
       receivers: [otlp]
