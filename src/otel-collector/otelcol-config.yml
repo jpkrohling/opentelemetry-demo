@@ -177,6 +177,18 @@ processors:
       profile:
         - 'IsMatch(resource.attributes["service.name"], "containerd-shim-.*")'
 
+  # The redis receiver scrapes valkey-cart but does not attach a service.name
+  # resource attribute, so its metrics are unidentifiable in the backend.
+  # Set it from the redis.version resource attribute the receiver does emit,
+  # only when service.name is absent so OTLP metrics sharing the pipeline are
+  # never overwritten.
+  transform/set_redis_service_name:
+    error_mode: ignore
+    metric_statements:
+      - context: resource
+        statements:
+          - set(attributes["service.name"], "valkey-cart") where attributes["service.name"] == nil and attributes["redis.version"] != nil
+
   transform/sanitize_logs:
     error_mode: ignore
     log_statements:
@@ -244,7 +256,7 @@ service:
       exporters: [debug, span_metrics]
     metrics:
       receivers: [docker_stats, http_check/frontend-proxy, host_metrics, nginx, otlp, redis, postgresql, prometheus/ad, span_metrics]
-      processors: [resourcedetection, memory_limiter]
+      processors: [resourcedetection, memory_limiter, transform/set_redis_service_name]
       exporters: [debug]
     logs:
       receivers: [otlp]
